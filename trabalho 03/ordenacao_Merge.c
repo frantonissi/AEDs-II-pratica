@@ -50,8 +50,17 @@ void merge(int v[], int inicio, int meio, int fim){
     }
 }
 
-void mergeSort(){
-    
+void mergeSort(int inicio, int fim, int v[]){
+
+if (inicio < fim){
+    int meio = (inicio + fim)/2;
+    mergeSort(inicio, meio, v);
+    mergeSort(meio + 1, fim, v);
+    merge(v, inicio, meio, fim);
+
+}
+
+
 }
 
 
