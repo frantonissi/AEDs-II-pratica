@@ -147,6 +147,31 @@ void mergeSort(int inicio, int fim, int v_temp[], Jogador v[]) {
     }
 }
 
+// --- Algoritmo de Ordenação Simples: Bubble Sort ---
+void bubbleSort(Jogador v[], int n) {
+    int i, j;
+    Jogador temp;
+
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < n - 1 - i; j++) {
+            
+            metricasGlobais.comparacoes++; 
+
+            
+            if (strcmp(v[j].nome, v[j+1].nome) > 0) {
+                
+                // Realiza a troca (Swap)
+                temp = v[j];
+                v[j] = v[j + 1];
+                v[j + 1] = temp;
+
+                // Cada troca envolve 3 movimentações de dados na memória
+                metricasGlobais.movimentacoes += 3; 
+            }
+        }
+    }
+}
+
 // --- Função Principal ---
 
 int main(int argc, char *argv[]) {
@@ -174,14 +199,13 @@ int main(int argc, char *argv[]) {
 
     switch (algoritmo) {
         case 1:
-            // TODO: Implementar Algoritmo Simples (ex: Bubble ou Selection)
-            printf("Algoritmo Simples nao implementado ainda.\n");
+            bubbleSort(jogadores, n);
+            break;
             break;
         case 2:
             mergeSort(0, n - 1, NULL, jogadores);
             break;
         case 3:
-            // TODO: Implementar Algoritmo Linear (ex: Radix ou Counting)
             printf("Algoritmo Linear nao implementado ainda.\n");
             break;
         default:
@@ -193,15 +217,9 @@ int main(int argc, char *argv[]) {
     fim_t = clock();
     tempo_ms = ((double)(fim_t - inicio_t) / CLOCKS_PER_SEC) * 1000.0;
 
-    // Saída Esperada: Lista Ordenada
     imprimirVet(jogadores, n);
 
-    // Saída Esperada: Métricas (4 números em ponto flutuante)
-    // 1. Tempo (ms)
-    // 2. Comparações
-    // 3. Movimentações
-    // 4. Memória Gasta (Bytes)
-    
+   
     // Cálculo de Memória:
     // O Merge Sort gasta O(N) de memória auxiliar. 
     // Total = Vetor Original + Vetor Auxiliar (na soma das chamadas recursivas chega a N)
@@ -210,7 +228,7 @@ int main(int argc, char *argv[]) {
         memoriaBytes *= 2; // Merge sort usa o dobro de memória (array original + aux)
     }
 
-    printf("%.2f - Tempo em MS \n ", tempo_ms);
+    printf("%.2f - Tempo em MS \n", tempo_ms);
     printf("%.0f - Comparacoes \n", (double)metricasGlobais.comparacoes);
     printf("%.0f - Movimentaçces \n", (double)metricasGlobais.movimentacoes);
     printf("%.2f - Memoria em Bytes ", memoriaBytes); // Memoria em Bytes
