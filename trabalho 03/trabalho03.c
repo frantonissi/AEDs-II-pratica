@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h> // Necessário para configurar o console no Windows
+#include <windows.h> 
 #include <locale.h>
 
 // Definição da Struct conforme o enunciado
@@ -20,10 +20,8 @@ typedef struct {
     unsigned long long movimentacoes;
 } Metricas;
 
-// Variáveis globais para métricas (para facilitar a contagem na recursão)
 Metricas metricasGlobais = {0, 0};
 
-// --- Funções Auxiliares ---
 
 
 int lerArquivo(char *jogadores, Jogador **vetor) {
@@ -48,7 +46,6 @@ int lerArquivo(char *jogadores, Jogador **vetor) {
         }
 
         // Lê os dados separados por vírgula
-        // Ajuste aqui se o seu CSV usar ponto e vírgula (;)
         char *token = strtok(linha, ",");
         if (token) strcpy((*vetor)[count].nome, token);
 
@@ -71,7 +68,6 @@ int lerArquivo(char *jogadores, Jogador **vetor) {
     return count;
 }
 
-// Função para imprimir os dados (conforme pedido na saída esperada)
 void imprimirVet(Jogador v[], int n) {
     for (int i = 0; i < n; i++) {
         // Exibindo todos os campos como pedido
@@ -114,7 +110,7 @@ void merge(Jogador v[], int inicio, int meio, int fim) {
             v[k] = D[j];
             j++;
         }
-        metricasGlobais.movimentacoes++; // Atribuição ao vetor original conta como troca/movimento
+        metricasGlobais.movimentacoes++; 
         k++;
     }
 
