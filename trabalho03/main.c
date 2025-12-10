@@ -2,8 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h> 
 #include <locale.h>
+
+/*
+AEDS II (Prática)
+Trabalho 3
+
+Diego Vianna Leite Montemor
+Francisco Toro Tonissi 
+Pedro Ferreira Prado
+*/
 
 // Definição da Struct conforme o enunciado
 typedef struct {
@@ -154,7 +162,7 @@ void bubbleSort(Jogador v[], int n) {
             metricasGlobais.comparacoes++; 
 
             
-            if (strcmp(v[j].nome, v[j+1].nome) > 0) {
+            if (strcoll(v[j].nome, v[j+1].nome) > 0) {
                 
                 // Realiza a troca (Swap)
                 temp = v[j];
@@ -168,18 +176,113 @@ void bubbleSort(Jogador v[], int n) {
     }
 }
 
-// --- Função Principal ---
+// --- Algoritmo de Ordenação Linear: Radix Sort (LSD para Strings) ---
 
-int main(int argc, char *argv[]) {
-    SetConsoleOutputCP(65001);
-    setlocale(LC_COLLATE, "");
-    if (argc < 2) {
-        printf("Uso: %s <algoritmo_id>\n", argv[0]);
-        printf("1: Ordenacao Simples\n2: Ordenacao Otima (Merge)\n3: Ordenacao Linear\n");
-        return 1;
+// Função auxiliar para pegar o tamanho da maior string no vetor
+int obterMaxLen(Jogador v[], int n) {
+    int maxLen = 0;
+    for (int i = 0; i < n; i++) {
+        int len = strlen(v[i].nome);
+        if (len > maxLen) {
+            maxLen = len;
+        }
+    }
+    return maxLen;
+}
+
+// Counting Sort adaptado para ordenar com base no caractere na posição 'pos'
+void countingSortNome(Jogador v[], char **chaves, int n, int pos) {
+    // Alocação dos vetores auxiliares de saída
+    Jogador *output = (Jogador *)malloc(n * sizeof(Jogador));
+    char **outputChaves = (char **)malloc(n * sizeof(char *));
+    
+    if (!output || !outputChaves) {
+        printf("Erro de alocacao no Counting Sort\n");
+        exit(1);
     }
 
-    int algoritmo = atoi(argv[1]);
+    int count[256] = {0};
+
+    // 1. Contagem de frequências usando a CHAVE transformada
+    for (int i = 0; i < n; i++) {
+        int len = strlen(chaves[i]);
+        // Se a posição for maior que a string, usa 0 (padding)
+        int charIndex = (pos < len) ? (unsigned char)chaves[i][pos] : 0;
+        count[charIndex]++;
+    }
+
+    // 2. Soma de prefixo
+    for (int i = 1; i < 256; i++) {
+        count[i] += count[i - 1];
+    }
+
+    // 3. Construção do array de saída (Estável: trás para frente)
+    for (int i = n - 1; i >= 0; i--) {
+        int len = strlen(chaves[i]);
+        int charIndex = (pos < len) ? (unsigned char)chaves[i][pos] : 0;
+        
+        int destIndex = count[charIndex] - 1;
+
+        // Movemos O JOGADOR e a CHAVE para manter sincronia
+        output[destIndex] = v[i];
+        outputChaves[destIndex] = chaves[i];
+        
+        count[charIndex]--;
+        metricasGlobais.movimentacoes++; 
+    }
+
+    // 4. Copiar de volta para os vetores originais
+    for (int i = 0; i < n; i++) {
+        v[i] = output[i];
+        chaves[i] = outputChaves[i]; // Atualiza a ordem das chaves também
+        metricasGlobais.movimentacoes++;
+    }
+
+    free(output);
+    free(outputChaves);
+}
+
+void radixSortNome(Jogador v[], int n) {
+    // 1. Criar vetor de chaves transformadas (strxfrm)
+    // Isso converte "Álvaro" em uma sequência de bytes que o Radix entende corretamente
+    char **chaves = (char **)malloc(n * sizeof(char *));
+    int maxLen = 0;
+
+    for (int i = 0; i < n; i++) {
+        // strxfrm retorna o tamanho necessário. Chamamos com NULL para descobrir o tamanho.
+        size_t len = strxfrm(NULL, v[i].nome, 0) + 1; 
+        chaves[i] = (char *)malloc(len * sizeof(char));
+        
+        // Realiza a transformação baseada no locale (LC_COLLATE)
+        strxfrm(chaves[i], v[i].nome, len);
+
+        if ((int)len > maxLen) {
+            maxLen = (int)len;
+        }
+    }
+
+    // 2. Aplica o Counting Sort nas posições das CHAVES
+    // Note que usamos maxLen das chaves, não dos nomes originais
+    for (int pos = maxLen - 1; pos >= 0; pos--) {
+        countingSortNome(v, chaves, n, pos);
+    }
+
+    // 3. Liberar memória das chaves auxiliares
+    for (int i = 0; i < n; i++) {
+        free(chaves[i]);
+    }
+    free(chaves);
+}
+
+
+// --- Função Principal ---
+int main(){
+    setlocale(LC_ALL, "");
+    int algoritmo;
+    printf("-- Escolha um algoritimo de ordenação --\n");
+    printf("1: Ordenacao Simples (Bobble)\n2: Ordenacao Otima (Merge)\n3: Ordenacao Linear (Radix)\nR: ");
+    scanf("%d",&algoritmo);
+    
     Jogador *jogadores = NULL;
     int n = lerArquivo("jogadores.csv", &jogadores);
 
@@ -197,12 +300,11 @@ int main(int argc, char *argv[]) {
         case 1:
             bubbleSort(jogadores, n);
             break;
-            break;
         case 2:
             mergeSort(0, n - 1, NULL, jogadores);
             break;
         case 3:
-            printf("Algoritmo Linear nao implementado ainda.\n");
+            radixSortNome(jogadores, n);
             break;
         default:
             printf("Opcao invalida.\n");
@@ -215,13 +317,13 @@ int main(int argc, char *argv[]) {
 
     imprimirVet(jogadores, n);
 
-   
-    // Cálculo de Memória:
-    // O Merge Sort gasta O(N) de memória auxiliar. 
-    // Total = Vetor Original + Vetor Auxiliar (na soma das chamadas recursivas chega a N)
+
+    // Cálculo de Memória (Estimativa)
     double memoriaBytes = (double)(n * sizeof(Jogador)); 
-    if(algoritmo == 2) {
-        memoriaBytes *= 2; // Merge sort usa o dobro de memória (array original + aux)
+
+    // Merge Sort (2) e Radix Sort (3) usam vetor auxiliar, dobrando o uso
+    if(algoritmo == 2 || algoritmo == 3) {
+        memoriaBytes *= 2; 
     }
 
     printf("%.2f - Tempo em MS \n", tempo_ms);
@@ -230,5 +332,7 @@ int main(int argc, char *argv[]) {
     printf("%.2f - Memoria em Bytes ", memoriaBytes); // Memoria em Bytes
 
     free(jogadores);
+
+    printf("\n\n FELIZ NATAL!!! :)\n");
     return 0;
 }
